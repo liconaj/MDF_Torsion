@@ -60,14 +60,14 @@ class SpriteEditor(tk.Tk):
     def paint_fg(self, event):
         x, y = event.x // self.px, event.y // self.px
         if self.is_inside_canvas(event.x, event.y):
-            self.pixels[x][y] = 1
+            self.pixels[y][x] = 1
             self.draw_pixel(x, y, FG)
             self.show_position(event)
 
     def paint_bg(self, event):
         x, y = event.x // self.px, event.y // self.px
         if self.is_inside_canvas(event.x, event.y):
-            self.pixels[x][y] = 0
+            self.pixels[y][x] = 0
             self.draw_pixel(x, y, BG)
             self.show_position(event)
 
