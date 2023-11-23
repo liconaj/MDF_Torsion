@@ -89,12 +89,12 @@ class SpriteEditor(tk.Tk):
         ]
 
     def save_ppm(self):
-        with open(f"{OUTPUT}.ppm", "w") as file:
+        with open(f"{OUTPUT}.pbm", "w") as file:
             file.write("P1\n")
             file.write(f"{self.ncells} {self.ncells}\n")
             for row in self.pixels:
                 file.write(f"{' '.join([str(p) for p in row])}\n")
-        print(f"Perfil guardado en {OUTPUT}.ppm")
+        print(f"Perfil guardado en {OUTPUT}.pbm")
 
 
 def _show_help():
