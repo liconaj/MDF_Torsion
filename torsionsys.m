@@ -104,7 +104,7 @@ classdef torsionsys
             figure
             xt = (1:obj.m)*obj.h;
             yt = (1:obj.m)*obj.h;
-            contourf(xt,yt,obj.imgPhi, 20, 'LineColor', 'flat')
+            contourf(xt,yt,obj.imgPhi(end:-1:1,:), 20, 'LineColor', 'flat')
             title("Distribución \Phi")
             colorbar
             daspect([1 1 1])
@@ -114,9 +114,11 @@ classdef torsionsys
             figure
             xt = (2:obj.m-1)*obj.h;
             yt = (2:obj.m-1)*obj.h;
-            contourf(xt,yt,obj.tau, 20, 'LineColor', 'flat')
+            contourf(xt,yt,obj.tau(end:-1:1,:), 20, 'LineColor', 'flat')
             title("Distribución magnitud \tau")
-            colorbar
+            hc = colorbar;
+            title(hc, "GPa")
+            colormap turbo
             daspect([1 1 1])
         end
         function showtaucomps(obj)
@@ -125,33 +127,19 @@ classdef torsionsys
             yt = (2:obj.m-1)*obj.h;
             
             subplot(1,2,1)
-            contourf(xt,yt,obj.tauxz, 20, 'LineColor', 'flat')
-            title("Distribución componente \tau_xz")
-            colorbar
+            contourf(xt,yt,obj.tauxz(end:-1:1,:), 20, 'LineColor', 'flat')
+            title("\tau_xz")
+            hc = colorbar;
+            title(hc, "GPa")
+            colormap turbo
             daspect([1 1 1])
             
             subplot(1,2,2)
-            contourf(xt,yt,obj.tauyz, 20, 'LineColor', 'flat')
-            title("Distribución componente \tau_yz")
-            colorbar
-            daspect([1 1 1])
-        end
-        function showtauxz(obj)
-            figure
-            xt = (2:obj.m-1)*obj.h;
-            yt = (2:obj.m-1)*obj.h;
-            contourf(xt,yt,obj.tauxz, 20, 'LineColor', 'flat')
-            title("Distribución componente \tau_xz")
-            colorbar
-            daspect([1 1 1])
-        end
-        function showtauyz(obj)
-            figure
-            xt = (2:obj.m-1)*obj.h;
-            yt = (2:obj.m-1)*obj.h;
-            contourf(xt,yt,obj.tauyz, 20, 'LineColor', 'flat')
-            title("Distribución componente \tau_yz")
-            colorbar
+            contourf(xt,yt,obj.tauyz(end:-1:1,:), 20, 'LineColor', 'flat')
+            title("\tau_yz")
+            hc = colorbar;
+            title(hc, "GPa")
+            colormap turbo
             daspect([1 1 1])
         end
     end
