@@ -75,7 +75,7 @@ classdef torsionsys
                     obj.imgPhi(y, x) = obj.Phi(idx);
                 end
             end
-
+            obj.imgPhi = obj.imgPhi(:,end:-1:1);
             obj.tauxz = nan(obj.m-2);
             obj.tauyz = nan(obj.m-2);
             for y = 2:obj.m-1
@@ -104,7 +104,7 @@ classdef torsionsys
             figure
             xt = (1:obj.m)*obj.h;
             yt = (1:obj.m)*obj.h;
-            contourf(xt,yt,obj.imgPhi(end:-1:1,:), 20, 'LineColor', 'flat')
+            contourf(xt,yt,obj.imgPhi, 20, 'LineColor', 'flat')
             title("Distribución \Phi")
             colorbar
             daspect([1 1 1])
@@ -114,8 +114,26 @@ classdef torsionsys
             figure
             xt = (2:obj.m-1)*obj.h;
             yt = (2:obj.m-1)*obj.h;
-            contourf(xt,yt,obj.tau(end:-1:1,:), 20, 'LineColor', 'flat')
+            contourf(yt,xt,obj.tau, 20, 'LineColor', 'flat')
             title("Distribución magnitud \tau")
+            hc = colorbar;
+            title(hc, "GPa")
+            colormap turbo
+            daspect([1 1 1])
+        end
+        function showtaucamp(obj)
+            figure
+            p = (obj.m-3)/17;
+            xt = (2:p:obj.m-1)*obj.h;
+            yt = (2:p:obj.m-1)*obj.h;
+            U = obj.tauyz(floor(1:p:end),floor(1:p:end));
+            V = obj.tauxz(floor(1:p:end),floor(1:p:end));
+            quiver(xt,yt,U,V)
+            hold on
+            xt = (2:obj.m-1)*obj.h;
+            yt = (2:obj.m-1)*obj.h;
+            contour(xt,yt,obj.tau,20, 'LineColor', 'flat')
+            title("Distribución vectores \tau")
             hc = colorbar;
             title(hc, "GPa")
             colormap turbo
