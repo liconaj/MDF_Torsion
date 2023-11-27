@@ -89,6 +89,12 @@ class SpriteEditor(tk.Tk):
         ]
 
     def save_ppm(self):
+        total = 0
+        for row in self.pixels:
+            total += sum(row)
+        if total == 0:
+            print("Perfil vacío, no se guardó")
+            return
         with open(f"{OUTPUT}.pbm", "w") as file:
             file.write("P1\n")
             file.write(f"{self.ncells} {self.ncells}\n")
