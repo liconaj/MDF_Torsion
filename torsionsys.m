@@ -9,10 +9,15 @@ classdef torsionsys
         vecF
         Phi
         imgPhi
+        theta
+        tauxz
+        tauyz
+        tau
+        J, W, L, G, h, T
     end
 
     properties (GetAccess = private)
-        W, L, G, h, T
+        targetT
         profile_data
         n % numero de nodos
         m % tamaño matriz
@@ -27,12 +32,11 @@ classdef torsionsys
             obj.L = params.L;
             obj.G = params.G;
             obj.h = params.h;
-            obj.T = params.T;
+            obj.targetT = params.T;
             obj = obj.setupemesh();
+            obj.J = obj.calcJ();
         end
         function obj = setupsystem(obj)
-            F = -2*obj.G*pi/4;
-            obj.vecF = F * ones(obj.n, 1);
             obj.matA = -4*speye(obj.n);
             for y = 1:obj.m
                 for x = 1:obj.m
@@ -54,10 +58,13 @@ classdef torsionsys
                     end
                 end
             end
-            obj.matA = obj.matA / obj.h^2;
         end
         function obj = solvesystem(obj)
-            obj.Phi = obj.matA\obj.vecF;
+            eq = @(T) obj.calcT(T) - obj.targetT;
+            Ttheta = fsolve(eq, obj.targetT, optimoptions(@fsolve, "Display", "off"));
+            obj.theta = Ttheta / (obj.J * obj.G);
+            obj.Phi = obj.calcPhi(obj.theta);
+            obj.T = 2*sum(obj.Phi) * obj.h^2;
             obj.imgPhi = obj.mesh;
             for y = 1:obj.m
                 for x = 1:obj.m
@@ -68,6 +75,30 @@ classdef torsionsys
                     obj.imgPhi(y, x) = obj.Phi(idx);
                 end
             end
+
+            obj.tauxz = nan(obj.m-2);
+            obj.tauyz = nan(obj.m-2);
+            for y = 2:obj.m-1
+                for x = 2:obj.m-1
+                    if isnan(obj.imgPhi(y,x))
+                        continue
+                    end
+                    dPhix = obj.imgPhi(y,x+1)-obj.imgPhi(y,x-1);
+                    obj.tauxz(y-1,x-1) = dPhix/(2*obj.h);
+                    dPhiy = obj.imgPhi(y+1,x)-obj.imgPhi(y-1,x);
+                    obj.tauyz(y-1,x-1) = -dPhiy/(2*obj.h);
+                end
+            end
+            obj.tau = (obj.tauxz.^2+obj.tauyz.^2).^0.5;
+        end
+        function Phi = calcPhi(obj, theta)
+            F = -2*obj.G*theta;
+            obj.vecF = F * ones(obj.n, 1);
+            Phi = obj.matA\obj.vecF;
+        end
+        function T = calcT(obj, Ttheta)
+            theta_guess = Ttheta / (obj.J * obj.G);
+            T = 2*sum(obj.calcPhi(theta_guess)) * obj.h^2;
         end
         function showPhi(obj)
             figure
@@ -78,6 +109,50 @@ classdef torsionsys
             colorbar
             daspect([1 1 1])
             % set(gca,'Color','k')
+        end
+        function showtau(obj)
+            figure
+            xt = (2:obj.m-1)*obj.h;
+            yt = (2:obj.m-1)*obj.h;
+            contourf(xt,yt,obj.tau, 20, 'LineColor', 'flat')
+            title("Distribución magnitud \tau")
+            colorbar
+            daspect([1 1 1])
+        end
+        function showtaucomps(obj)
+            figure
+            xt = (2:obj.m-1)*obj.h;
+            yt = (2:obj.m-1)*obj.h;
+            
+            subplot(1,2,1)
+            contourf(xt,yt,obj.tauxz, 20, 'LineColor', 'flat')
+            title("Distribución componente \tau_xz")
+            colorbar
+            daspect([1 1 1])
+            
+            subplot(1,2,2)
+            contourf(xt,yt,obj.tauyz, 20, 'LineColor', 'flat')
+            title("Distribución componente \tau_yz")
+            colorbar
+            daspect([1 1 1])
+        end
+        function showtauxz(obj)
+            figure
+            xt = (2:obj.m-1)*obj.h;
+            yt = (2:obj.m-1)*obj.h;
+            contourf(xt,yt,obj.tauxz, 20, 'LineColor', 'flat')
+            title("Distribución componente \tau_xz")
+            colorbar
+            daspect([1 1 1])
+        end
+        function showtauyz(obj)
+            figure
+            xt = (2:obj.m-1)*obj.h;
+            yt = (2:obj.m-1)*obj.h;
+            contourf(xt,yt,obj.tauyz, 20, 'LineColor', 'flat')
+            title("Distribución componente \tau_yz")
+            colorbar
+            daspect([1 1 1])
         end
     end
     methods (Access = private)
@@ -104,8 +179,9 @@ classdef torsionsys
                     else
                         ys = [y-1, y];
                     end
-                    val = sum(obj.sketch(ys, xs), "all");
-                    if val > 2
+                    neighbors = obj.sketch(ys, xs);
+                    val = sum(neighbors, "all");
+                    if val > 2 % && ~any(isnan(neighbors(:)))
                         rawmesh(y,x) = 1;
                     elseif val > 0
                         rawmesh(y,x) = 0;
@@ -127,6 +203,25 @@ classdef torsionsys
                     sumx = sum(rawmesh([y-1, y+1], x));
                     obj.mesh(y,x) = sumy + sumx;
                     obj.meshindex(y,x) = idx;
+                end
+            end
+        end
+
+        function J = calcJ(obj)
+            J = 0;
+            dA = obj.h^2;
+            cx = obj.W/2;
+            cy = obj.W/2;
+            [sm, sn] = size(obj.sketch);
+            for jj = 1:sm
+                for ii = 1:sn
+                    if ~obj.sketch(jj,ii)
+                        continue
+                    end
+                    x = ii*obj.h;
+                    y = jj*obj.h;
+                    r2 = (x-cx)^2+(y-cy)^2;
+                    J = J + r2 * dA;
                 end
             end
         end
