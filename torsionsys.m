@@ -108,9 +108,9 @@ classdef torsionsys
                         continue
                     end
                     dPhix = obj.imgPhi(y,x+1)-obj.imgPhi(y,x-1);
-                    obj.tauxz(y-1,x-1) = dPhix/(2*obj.h);
+                    obj.tauyz(y-1,x-1) = -dPhix/(2*obj.h);
                     dPhiy = obj.imgPhi(y+1,x)-obj.imgPhi(y-1,x);
-                    obj.tauyz(y-1,x-1) = -dPhiy/(2*obj.h);
+                    obj.tauxz(y-1,x-1) = dPhiy/(2*obj.h);
                 end
             end
             % Calcula las magnitudes de tau
@@ -168,8 +168,8 @@ classdef torsionsys
             p = (obj.m-3)/17;
             xt = (2:p:obj.m-1)*obj.h;
             yt = (2:p:obj.m-1)*obj.h;
-            U = obj.tauyz(floor(1:p:end),floor(1:p:end));
-            V = obj.tauxz(floor(1:p:end),floor(1:p:end));
+            U = obj.tauxz(floor(1:p:end),floor(1:p:end));
+            V = obj.tauyz(floor(1:p:end),floor(1:p:end));
             quiver(xt,yt,U,V)
             hold on
             xt = (2:obj.m-1)*obj.h;
