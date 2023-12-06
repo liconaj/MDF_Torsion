@@ -71,6 +71,7 @@ classdef torsionsys
                     end
                 end
             end
+            obj.matA = (1/obj.h^2)*obj.matA;
         end
 
         function obj = solvesystem(obj)
