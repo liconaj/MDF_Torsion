@@ -16,7 +16,9 @@ classdef torsionsys
         tauxz       % Componente tau_xz
         tauyz       % Componente tau_yz
         tau         % Magnitud de tau
-        J, W, L, G, h, T  % Parámetros y propiedades del sistema
+        tauMax      % Máximo esfuerzo cortante
+        ny          % Factor de seguridad
+        J, W, L, G, h, T, sy  % Parámetros y propiedades del sistema
     end
 
     properties (GetAccess = private)
@@ -36,6 +38,7 @@ classdef torsionsys
             obj.L = params.L;
             obj.G = params.G;
             obj.h = params.h;
+            obj.sy = params.sy;
             obj.targetT = params.T;
             obj = obj.setupemesh(); % Configura la malla
             obj.J = obj.calcJ();    % Calcula el momento polar de inercia
@@ -111,6 +114,11 @@ classdef torsionsys
             end
             % Calcula las magnitudes de tau
             obj.tau = (obj.tauxz.^2+obj.tauyz.^2).^0.5;
+            obj.tauMax = max(obj.tau, [], "all");
+            obj.ny = obj.sy / (2*obj.tauMax);
+            if obj.tauMax > obj.sy/2
+                warning("Sistema falla estáticamente por criterio de Tresca")
+            end
         end
 
         function Phi = calcPhi(obj, theta)
@@ -147,7 +155,7 @@ classdef torsionsys
             contourf(yt,xt,obj.tau, 20, 'LineColor', 'flat')
             title("Distribución magnitud \tau")
             hc = colorbar;
-            title(hc, "GPa") % Mostrar unidad esfuerzo
+            title(hc, "MPa") % Mostrar unidad esfuerzo
             colormap turbo
             daspect([1 1 1]) % Ajustar proporción ejes de la gráfica
         end
@@ -168,7 +176,7 @@ classdef torsionsys
             contour(xt,yt,obj.tau,20, 'LineColor', 'flat')
             title("Distribución vectores \tau")
             hc = colorbar;
-            title(hc, "GPa") % Mostrar unidad esfuerzo
+            title(hc, "MPa") % Mostrar unidad esfuerzo
             colormap turbo
             daspect([1 1 1]) % Ajustar proporción ejes de la gráfica
         end
@@ -183,7 +191,7 @@ classdef torsionsys
             contourf(xt,yt,obj.tauxz(end:-1:1,:), 20, 'LineColor', 'flat')
             title("\tau_xz")
             hc = colorbar;
-            title(hc, "GPa") % Mostrar unidad esfuerzo
+            title(hc, "MPa") % Mostrar unidad esfuerzo
             colormap turbo
             daspect([1 1 1]) % Ajustar proporción ejes de la gráfica
             
@@ -191,7 +199,7 @@ classdef torsionsys
             contourf(xt,yt,obj.tauyz(end:-1:1,:), 20, 'LineColor', 'flat')
             title("\tau_yz")
             hc = colorbar;
-            title(hc, "GPa") % Mostrar unidad esfuerzo
+            title(hc, "MPa") % Mostrar unidad esfuerzo
             colormap turbo
             daspect([1 1 1]) % Ajustar proporción ejes de la gráfica
         end
